@@ -137,6 +137,13 @@ export default function NewPersonPage() {
           addresses: addresses || [],
           communication: communications || [],
           search_index: formData.search_index ? formData.search_index.split(',').map(s => s.trim()).filter(Boolean) : [],
+      });
+
+      if (error) throw error;
+
+      router.push('/crewgrid/employees'); // or wherever appropriate
+    } catch (err: any) {
+      console.error(err);
       alert("Fehler beim Speichern: " + (err?.message || JSON.stringify(err)));
     } finally {
       setIsSaving(false);
