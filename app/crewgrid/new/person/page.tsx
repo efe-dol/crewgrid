@@ -80,6 +80,9 @@ export default function NewPersonPage() {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [communications, setCommunications] = useState<any[]>([]);
   const [primaryLanguage, setPrimaryLanguage] = useState('deutsch');
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>([]);
 
   const handleContactTypeChange = (type: string) => {
     setContactTypes(prev => {
@@ -112,7 +115,28 @@ export default function NewPersonPage() {
   }, [contactTypes, activeTab]);
 
   const updateField = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const old = (prev as any)[field];
+      if (old !== value) {
+        setHistory(h => [{ id: crypto?.randomUUID?.() || Date.now().toString(), field, oldValue: old, newValue: value, at: new Date().toISOString(), by: 'user' }, ...h]);
+      }
+      return { ...prev, [field]: value };
+    });
+  };
+
+  const uploadDocument = async (file: File) => {
+    try {
+      const filename = `${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage.from('documents').upload(filename, file);
+      if (error) throw error;
+      const publicUrl = await supabase.storage.from('documents').getPublicUrl(filename);
+      const doc = { id: crypto?.randomUUID?.() || Date.now().toString(), name: file.name, path: filename, url: publicUrl.data?.publicUrl || '', uploaded_at: new Date().toISOString(), uploaded_by: 'current' };
+      setDocuments(d => [doc, ...d]);
+      setHistory(h => [{ id: crypto?.randomUUID?.() || Date.now().toString(), field: 'document_upload', oldValue: null, newValue: doc.name, at: new Date().toISOString(), by: 'user' }, ...h]);
+    } catch (err: any) {
+      console.error(err);
+      alert('Upload fehlgeschlagen: ' + (err.message || JSON.stringify(err)));
+    }
   };
 
   const handleSave = async () => {
@@ -253,69 +277,67 @@ export default function NewPersonPage() {
                   })}
                 </AnimatePresence>
               </div>
+
+              {/* Sidebar Configuration Area (Entity & Contact Types) */}
+              <div className="mt-6 px-5 flex flex-col gap-6 border-t border-[#333] pt-6 pb-6">
+                {/* Entity Types (Radio) */}
+                <div>
+                  <span className="block text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-3">Art des Kontakts</span>
+                  <div className="flex flex-col gap-2">
+                    {entityTypesList.map(et => {
+                      const isSelected = entityType === et.id;
+                      return (
+                        <button
+                          key={et.id}
+                          onClick={() => setEntityType(et.id)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-md text-[13px] transition-colors border ${
+                            isSelected 
+                              ? 'bg-[#E71F7F]/10 border-[#E71F7F] text-[#E71F7F]' 
+                              : 'bg-[#121212] border-[#444] text-gray-300 hover:border-gray-500'
+                          }`}
+                        >
+                          <et.icon size={15} />
+                          {et.id}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Contact Types (Checkboxes) */}
+                <div>
+                  <span className="block text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-3">Kontaktgruppen</span>
+                  <div className="flex flex-col gap-3">
+                    {contactTypesList.map(type => {
+                      const isSelected = contactTypes.includes(type);
+                      return (
+                        <label key={type} className="flex items-center gap-2 text-[13px] text-gray-300 cursor-pointer group">
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                            isSelected 
+                              ? 'bg-[#E71F7F] border-[#E71F7F]' 
+                              : 'bg-[#121212] border-[#555] group-hover:border-gray-400'
+                          }`}>
+                            {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                          </div>
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={isSelected}
+                            onChange={() => handleContactTypeChange(type)}
+                          />
+                          {type}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             {/* Main Form Area */}
             <div className="flex-1 bg-[#121212] overflow-y-auto p-6 text-gray-100">
               
-              {/* Top Configuration Area (Entity & Contact Types) */}
-              <div className="mb-8 p-5 bg-[#1a1a1a] border border-[#333] rounded-lg">
-                <div className="w-full flex flex-col lg:flex-row gap-8 lg:gap-12">
-                  
-                  {/* Entity Types (Radio) */}
-                  <div>
-                    <span className="block text-sm text-gray-400 mb-3">Welche Art von Kontakt legen Sie an?</span>
-                    <div className="flex flex-wrap gap-3">
-                      {entityTypesList.map(et => {
-                        const isSelected = entityType === et.id;
-                        return (
-                          <button
-                            key={et.id}
-                            onClick={() => setEntityType(et.id)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-colors border ${
-                              isSelected 
-                                ? 'bg-[#E71F7F]/10 border-[#E71F7F] text-[#E71F7F]' 
-                                : 'bg-[#121212] border-[#444] text-gray-300 hover:border-gray-500'
-                            }`}
-                          >
-                            <et.icon size={15} />
-                            {et.id}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Contact Types (Checkboxes) */}
-                  <div>
-                    <span className="block text-sm text-gray-400 mb-3">Kontaktart wählen (Mehrfachauswahl möglich)</span>
-                    <div className="flex flex-wrap gap-3">
-                      {contactTypesList.map(type => {
-                        const isSelected = contactTypes.includes(type);
-                        return (
-                          <label key={type} className="flex items-center gap-2 text-[13px] text-gray-300 cursor-pointer group">
-                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                              isSelected 
-                                ? 'bg-[#E71F7F] border-[#E71F7F]' 
-                                : 'bg-[#121212] border-[#555] group-hover:border-gray-400'
-                            }`}>
-                              {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                            </div>
-                            <input
-                              type="checkbox"
-                              className="hidden"
-                              checked={isSelected}
-                              onChange={() => handleContactTypeChange(type)}
-                            />
-                            {type}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Dynamic Tab Content Area */}
               <motion.div 
                 key={activeTab}
@@ -652,7 +674,13 @@ export default function NewPersonPage() {
                                   setCommunications(newArr);
                                 }}
                                 className="flex-1 bg-[#121212] border border-[#333] rounded-md px-3 py-1.5 text-[13px] text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
-                                placeholder="HIER"
+                                placeholder={
+                                  comm.type === 'Telefon' ? '+49 123 4567' : 
+                                  comm.type === 'Mobil' ? '+49 151 1234567' : 
+                                  comm.type === 'E-Mail' ? 'name@beispiel.de' : 
+                                  comm.type === 'Website' ? 'www.website.de' : 
+                                  'Zusatzinfo...'
+                                }
                               />
 
                               <button 
@@ -706,6 +734,44 @@ export default function NewPersonPage() {
                         <option value="Techniker">Techniker</option>
                       </select>
                     </motion.div>
+                    <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+                      <label className="text-[12px] text-gray-400 ml-1">Beitrittsdatum</label>
+                      <input
+                        type="date"
+                        value={(formData as any).beitritt || ''}
+                        onChange={(e) => updateField('beitritt', e.target.value)}
+                        className="w-full bg-[#1a1a1a] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                      />
+                    </motion.div>
+
+                    <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+                      <label className="text-[12px] text-gray-400 ml-1">Aufgabenfeld</label>
+                      <input
+                        type="text"
+                        value={(formData as any).aufgabenfeld || ''}
+                        onChange={(e) => updateField('aufgabenfeld', e.target.value)}
+                        className="w-full bg-[#1a1a1a] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                        placeholder="z.B. Technik, Booking, Logistik"
+                      />
+                    </motion.div>
+
+                    <motion.div variants={itemVariants} className="col-span-2 flex flex-col gap-2">
+                      <label className="text-[12px] text-gray-400 ml-1">Eigene Felder</label>
+                      <div className="flex flex-col gap-2">
+                        {customFields.map((cf, i) => (
+                          <div key={i} className="flex gap-2">
+                            <input value={cf.key} onChange={(e) => {
+                              const next = [...customFields]; next[i].key = e.target.value; setCustomFields(next);
+                            }} placeholder="Feldname" className="bg-[#121212] border border-[#333] rounded-md px-2 py-1 text-sm text-gray-100 flex-1" />
+                            <input value={cf.value} onChange={(e) => {
+                              const next = [...customFields]; next[i].value = e.target.value; setCustomFields(next);
+                            }} placeholder="Wert" className="bg-[#121212] border border-[#333] rounded-md px-2 py-1 text-sm text-gray-100 flex-1" />
+                            <button onClick={() => setCustomFields(cfds => cfds.filter((_, idx) => idx !== i))} className="px-2 bg-[#333] rounded text-sm">Entfernen</button>
+                          </div>
+                        ))}
+                        <button onClick={() => setCustomFields(cfds => [...cfds, { key: '', value: '' }])} className="mt-2 px-3 py-1 bg-[#333] rounded text-sm">+ Feld hinzufügen</button>
+                      </div>
+                    </motion.div>
                   </motion.div>
                 )}
 
@@ -720,22 +786,50 @@ export default function NewPersonPage() {
 
                 {activeTab === 'Dokumente' && (
                   <motion.div variants={containerVariants} initial="hidden" animate="visible">
-                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#333] rounded-xl py-16 bg-[#1a1a1a]/50">
-                      <FileText size={32} className="text-gray-600 mb-3" />
-                      <span className="text-sm text-gray-300">Dateien per Drag & Drop hierhin ziehen</span>
-                      <span className="text-xs text-gray-500 mt-1">oder manuell hochladen</span>
-                      <button className="mt-4 px-4 py-1.5 bg-[#222] border border-[#444] rounded-md text-xs hover:bg-[#333] transition-colors">
-                        Dateien auswählen
-                      </button>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3">
+                        <input type="file" id="docupload" onChange={(e) => {
+                          const f = e.target.files?.[0]; if (f) uploadDocument(f);
+                        }} className="text-sm" />
+                        <span className="text-xs text-gray-400">Hochgeladene Dokumente werden hier gelistet.</span>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        {documents.length === 0 && <p className="text-xs text-gray-500 italic">Keine Dokumente vorhanden.</p>}
+                        {documents.map(doc => (
+                          <div key={doc.id} className="flex items-center justify-between bg-[#121212] border border-[#333] rounded px-3 py-2">
+                            <div className="flex items-center gap-3">
+                              <FileText size={16} className="text-gray-300" />
+                              <div className="flex flex-col">
+                                <span className="text-sm text-gray-100">{doc.name}</span>
+                                <span className="text-xs text-gray-500">{new Date(doc.uploaded_at).toLocaleString()} • hochgeladen von {doc.uploaded_by}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a href={doc.url} target="_blank" rel="noreferrer" className="text-sm text-[#E71F7F]">Öffnen</a>
+                              <button onClick={() => setDocuments(d => d.filter((x:any) => x.id !== doc.id))} className="text-xs text-gray-400">Löschen</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </motion.div>
                 )}
 
                 {activeTab === 'Historie' && (
                   <motion.div variants={containerVariants} initial="hidden" animate="visible">
-                    <p className="text-sm text-gray-400">
-                      Sobald der Kontakt erstellt wurde, werden hier Änderungen und Aktivitäten protokolliert.
-                    </p>
+                    <div className="flex flex-col gap-2">
+                      {history.length === 0 && <p className="text-sm text-gray-400">Keine Änderungen protokolliert.</p>}
+                      {history.map(h => (
+                        <div key={h.id} className="bg-[#121212] border border-[#333] rounded px-3 py-2">
+                          <div className="flex justify-between items-center">
+                            <div className="text-xs text-gray-400">{new Date(h.at).toLocaleString()} • {h.by}</div>
+                            <div className="text-xs text-gray-400">{h.field}</div>
+                          </div>
+                          <div className="mt-1 text-sm text-gray-100">{h.oldValue ? `${h.oldValue} → ${h.newValue}` : h.newValue}</div>
+                        </div>
+                      ))}
+                    </div>
                   </motion.div>
                 )}
               </motion.div>
