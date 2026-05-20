@@ -16,7 +16,10 @@ import {
   Calendar, 
   CreditCard,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  Plus,
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -67,10 +70,19 @@ export default function EditContactPage() {
     vorname: '',
     nachname: '',
     firma: '',
+    abteilung: '',
+    position: '',
     geburtstag: '',
+    spitzname: '',
+    briefliche_anrede: '',
+    search_index: '',
     klasse: '',
     notizen: ''
   });
+
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [communications, setCommunications] = useState<any[]>([]);
+  const [primaryLanguage, setPrimaryLanguage] = useState('deutsch');
 
   React.useEffect(() => {
     async function loadData() {
@@ -88,10 +100,18 @@ export default function EditContactPage() {
           vorname: data.first_name || '',
           nachname: data.last_name || '',
           firma: data.company || '',
+          abteilung: data.department || '',
+          position: data.position || '',
           geburtstag: data.birthday || '',
+          spitzname: data.nickname || '',
+          briefliche_anrede: data.greeting || '',
+          search_index: data.search_index?.join(', ') || '',
           klasse: data.current_class || '',
           notizen: data.notes || ''
         });
+        setAddresses(data.addresses || []);
+        setCommunications(data.communication || []);
+        setPrimaryLanguage(data.primary_language || 'deutsch');
       }
       setIsLoading(false);
     }
@@ -143,9 +163,17 @@ export default function EditContactPage() {
         first_name: formData.vorname,
         last_name: formData.nachname,
         company: formData.firma,
+        department: formData.abteilung,
+        position: formData.position,
         birthday: formData.geburtstag,
+        nickname: formData.spitzname,
+        greeting: formData.briefliche_anrede,
         current_class: formData.klasse,
         notes: formData.notizen,
+        primary_language: primaryLanguage,
+        addresses: addresses || [],
+        communication: communications || [],
+        search_index: formData.search_index ? formData.search_index.split(',').map(s => s.trim()).filter(Boolean) : [],
         updated_at: new Date().toISOString()
       }).eq('id', contactId);
       
@@ -391,7 +419,6 @@ export default function EditContactPage() {
                               value={formData.vorname}
                               onChange={(e) => updateField('vorname', e.target.value)}
                               className="bg-[#121212] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
-                              placeholder="Max"
                             />
                           </motion.div>
                           <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
@@ -401,9 +428,74 @@ export default function EditContactPage() {
                               value={formData.nachname}
                               onChange={(e) => updateField('nachname', e.target.value)}
                               className="bg-[#121212] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
-                              placeholder="Mustermann"
                             />
                           </motion.div>
+                          
+                          <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+                            <label className="text-[12px] text-gray-400 ml-1">Abteilung</label>
+                            <input 
+                              type="text" 
+                              value={formData.abteilung}
+                              onChange={(e) => updateField('abteilung', e.target.value)}
+                              className="bg-[#121212] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                              placeholder="Abteilung"
+                            />
+                          </motion.div>
+                          <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+                            <label className="text-[12px] text-gray-400 ml-1">Position</label>
+                            <input 
+                              type="text" 
+                              value={formData.position}
+                              onChange={(e) => updateField('position', e.target.value)}
+                              className="bg-[#121212] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                              placeholder="Position"
+                            />
+                          </motion.div>
+
+                          <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+                            <label className="text-[12px] text-gray-400 ml-1">Geburtstag</label>
+                            <div className="relative">
+                               <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                               <input 
+                                 type="date" 
+                                 value={formData.geburtstag}
+                                 onChange={(e) => updateField('geburtstag', e.target.value)}
+                                 className="w-full bg-[#121212] border border-[#333] rounded-md pl-9 pr-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors appearance-none"
+                               />
+                            </div>
+                          </motion.div>
+                          <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+                            <label className="text-[12px] text-gray-400 ml-1">Spitzname</label>
+                            <input 
+                              type="text" 
+                              value={formData.spitzname}
+                              onChange={(e) => updateField('spitzname', e.target.value)}
+                              className="bg-[#121212] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                              placeholder="Spitzname"
+                            />
+                          </motion.div>
+
+                          <motion.div variants={itemVariants} className="flex flex-col gap-1.5 col-span-2">
+                            <label className="text-[12px] text-gray-400 ml-1">Briefliche Anrede</label>
+                            <input 
+                              type="text" 
+                              value={formData.briefliche_anrede}
+                              onChange={(e) => updateField('briefliche_anrede', e.target.value)}
+                              className="bg-[#121212] border border-[#333] rounded-md px-3 py-4 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                            />
+                          </motion.div>
+
+                          <motion.div variants={itemVariants} className="flex flex-col gap-1.5 col-span-2">
+                            <label className="text-[12px] text-gray-400 ml-1">Suchindex (Kontakte)</label>
+                            <input 
+                              type="text" 
+                              value={formData.search_index}
+                              onChange={(e) => updateField('search_index', e.target.value)}
+                              className="bg-[#121212] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                              placeholder="Schlüsselworte wählen... (kommagetrennt)"
+                            />
+                          </motion.div>
+
                           {entityType !== 'Person' && (
                             <motion.div variants={itemVariants} className="flex flex-col gap-1.5 col-span-2">
                               <label className="text-[12px] text-gray-400 ml-1">Firmenname</label>
@@ -419,10 +511,111 @@ export default function EditContactPage() {
                         </div>
                       </div>
 
-                      {/* Adressen Section placeholder */}
+                      {/* Adressen Section */}
                       <div className="bg-[#1a1a1a] border border-[#333] p-4 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-300 mb-4 border-b border-[#333] pb-2">Adressen</h3>
-                        <p className="text-xs text-gray-500 italic">Hier können später Adressen hinterlegt werden.</p>
+                        <div className="flex justify-between items-center mb-4 border-b border-[#333] pb-2">
+                          <h3 className="text-sm font-medium text-gray-300">Adressen</h3>
+                          <button 
+                            onClick={() => setAddresses([...addresses, { type: 'Rechnungsanschrift', adresszusatz: '', street: '', zip: '', city: '', country: 'Deutschland' }])}
+                            className="flex items-center gap-1 text-[11px] bg-[#333] hover:bg-[#444] text-white px-2 py-1 rounded transition-colors"
+                          >
+                            <Plus size={12} /> Adresse
+                          </button>
+                        </div>
+                        
+                        <div className="flex flex-col gap-4">
+                          {addresses.map((addr, idx) => (
+                            <div key={idx} className="flex flex-col gap-2 p-3 bg-[#121212] border border-[#333] rounded-md relative group">
+                              <select 
+                                value={addr.type}
+                                onChange={(e) => {
+                                  const newArr = [...addresses];
+                                  newArr[idx].type = e.target.value;
+                                  setAddresses(newArr);
+                                }}
+                                className="bg-[#1a1a1a] border border-[#333] rounded-md px-3 py-1.5 text-[13px] text-gray-100 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                              >
+                                <option value="Rechnungsanschrift">Rechnungsanschrift</option>
+                                <option value="Lieferanschrift">Lieferanschrift</option>
+                                <option value="Postanschrift">Postanschrift</option>
+                                <option value="Privatanschrift">Privatanschrift</option>
+                              </select>
+                              
+                              <input 
+                                type="text" 
+                                value={addr.adresszusatz}
+                                onChange={(e) => {
+                                  const newArr = [...addresses];
+                                  newArr[idx].adresszusatz = e.target.value;
+                                  setAddresses(newArr);
+                                }}
+                                className="bg-[#1a1a1a] border border-[#333] rounded-md px-3 py-1.5 text-[13px] text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                                placeholder="Adresszusatz"
+                              />
+
+                              <input 
+                                type="text" 
+                                value={addr.street}
+                                onChange={(e) => {
+                                  const newArr = [...addresses];
+                                  newArr[idx].street = e.target.value;
+                                  setAddresses(newArr);
+                                }}
+                                className="bg-[#1a1a1a] border border-[#333] rounded-md px-3 py-1.5 text-[13px] text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                                placeholder="Straße o. Postfach"
+                              />
+
+                              <div className="grid grid-cols-[100px_1fr] gap-2">
+                                <input 
+                                  type="text" 
+                                  value={addr.zip}
+                                  onChange={(e) => {
+                                    const newArr = [...addresses];
+                                    newArr[idx].zip = e.target.value;
+                                    setAddresses(newArr);
+                                  }}
+                                  className="bg-[#1a1a1a] border border-[#333] rounded-md px-3 py-1.5 text-[13px] text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                                  placeholder="PLZ"
+                                />
+                                <input 
+                                  type="text" 
+                                  value={addr.city}
+                                  onChange={(e) => {
+                                    const newArr = [...addresses];
+                                    newArr[idx].city = e.target.value;
+                                    setAddresses(newArr);
+                                  }}
+                                  className="bg-[#1a1a1a] border border-[#333] rounded-md px-3 py-1.5 text-[13px] text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                                  placeholder="Stadt"
+                                />
+                              </div>
+
+                              <select 
+                                value={addr.country || 'Deutschland'}
+                                onChange={(e) => {
+                                  const newArr = [...addresses];
+                                  newArr[idx].country = e.target.value;
+                                  setAddresses(newArr);
+                                }}
+                                className="bg-[#1a1a1a] border border-[#333] rounded-md px-3 py-1.5 text-[13px] text-gray-100 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                              >
+                                <option value="Deutschland">Deutschland</option>
+                                <option value="Österreich">Österreich</option>
+                                <option value="Schweiz">Schweiz</option>
+                              </select>
+
+                              <button 
+                                onClick={() => setAddresses(addresses.filter((_, i) => i !== idx))}
+                                className="absolute -bottom-2 -right-2 text-gray-500 hover:text-red-500 bg-[#121212] rounded-full p-1 border border-[#333]"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          {addresses.length === 0 && (
+                            <p className="text-xs text-gray-500 italic">Keine Adressen hinterlegt.</p>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -431,22 +624,98 @@ export default function EditContactPage() {
                       {/* Bilder/Notizen Section */}
                       <div className="bg-[#1a1a1a] border border-[#333] p-4 rounded-lg">
                         <h3 className="text-sm font-medium text-gray-300 mb-4 border-b border-[#333] pb-2">Bilder / Notizen</h3>
-                        <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
-                          <label className="text-[12px] text-gray-400 ml-1">Notizen (Interne Hinweise)</label>
-                          <textarea 
-                            rows={5}
-                            value={formData.notizen}
-                            onChange={(e) => updateField('notizen', e.target.value)}
-                            className="bg-[#121212] border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors resize-none"
-                            placeholder="Zusätzliche Informationen eingeben..."
-                          />
-                        </motion.div>
+                        <div className="flex gap-4">
+                          <motion.div variants={itemVariants} className="flex-1 flex flex-col gap-1.5">
+                            <label className="text-[12px] text-gray-400 ml-1">Notieren Sie sich hier wichtige Informationen zu diesem Kontakt.</label>
+                            <textarea 
+                              rows={5}
+                              value={formData.notizen}
+                              onChange={(e) => updateField('notizen', e.target.value)}
+                              className="bg-[#121212] h-full border border-[#333] rounded-md px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors resize-none"
+                            />
+                          </motion.div>
+                          <div className="w-[120px] shrink-0 flex flex-col gap-2 items-center">
+                            <div className="w-full aspect-square bg-[#121212] border border-[#333] rounded flex items-center justify-center text-gray-500">
+                              <ImageIcon size={40} className="opacity-50" />
+                            </div>
+                            <button className="text-[11px] bg-[#333] hover:bg-[#444] text-white px-3 py-1.5 rounded transition-colors w-full">
+                              Bild hochladen
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Kommunikation Section placeholder */}
+                      {/* Kommunikation Section */}
                       <div className="bg-[#1a1a1a] border border-[#333] p-4 rounded-lg">
-                        <h3 className="text-sm font-medium text-gray-300 mb-4 border-b border-[#333] pb-2">Kommunikation</h3>
-                        <p className="text-xs text-gray-500 italic">E-Mails, Telefonnummern etc.</p>
+                        <div className="flex justify-between items-center mb-4 border-b border-[#333] pb-2">
+                          <h3 className="text-sm font-medium text-gray-300">Kommunikation</h3>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <label className="text-[11px] text-gray-400">Sprache:</label>
+                              <select 
+                                value={primaryLanguage}
+                                onChange={(e) => setPrimaryLanguage(e.target.value)}
+                                className="bg-[#121212] border border-[#333] rounded text-[11px] px-2 py-1 text-gray-200"
+                              >
+                                <option value="deutsch">deutsch</option>
+                                <option value="englisch">englisch</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mb-3">
+                          <button 
+                            onClick={() => setCommunications([...communications, { type: 'Telefon', value: '' }])}
+                            className="flex items-center gap-1 text-[11px] bg-[#333] hover:bg-[#444] text-white px-2 py-1 rounded transition-colors"
+                          >
+                            <Plus size={12} /> Kommunikation
+                          </button>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          {communications.map((comm, idx) => (
+                            <div key={idx} className="flex gap-2 items-center group">
+                              <select 
+                                value={comm.type}
+                                onChange={(e) => {
+                                  const newArr = [...communications];
+                                  newArr[idx].type = e.target.value;
+                                  setCommunications(newArr);
+                                }}
+                                className="w-[130px] bg-[#121212] border border-[#333] rounded-md px-2 py-1.5 text-[13px] text-gray-100 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                              >
+                                <option value="Telefon">Telefon</option>
+                                <option value="Mobil">Mobil</option>
+                                <option value="E-Mail">E-Mail</option>
+                                <option value="Website">Website</option>
+                                <option value="LinkedIn">LinkedIn</option>
+                              </select>
+                              
+                              <input 
+                                type="text" 
+                                value={comm.value}
+                                onChange={(e) => {
+                                  const newArr = [...communications];
+                                  newArr[idx].value = e.target.value;
+                                  setCommunications(newArr);
+                                }}
+                                className="flex-1 bg-[#121212] border border-[#333] rounded-md px-3 py-1.5 text-[13px] text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#E71F7F] transition-colors"
+                                placeholder="HIER"
+                              />
+
+                              <button 
+                                onClick={() => setCommunications(communications.filter((_, i) => i !== idx))}
+                                className="text-gray-500 hover:text-red-500 p-1 opacity-100"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          ))}
+                          {communications.length === 0 && (
+                            <p className="text-xs text-gray-500 italic mt-2">Keine Kommunikationsdaten hinterlegt.</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </motion.div>
