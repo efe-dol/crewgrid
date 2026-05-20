@@ -387,6 +387,43 @@ export default function EditContactPage() {
             {/* Main Form Area */}
             <div className="flex-1 bg-[#121212] overflow-y-auto p-6 text-gray-100">
 
+              {/* Top Row: Kontaktgruppen + Aktivierung */}
+              <div className="mb-6 p-3 bg-[#121212] rounded">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-wrap gap-3">
+                    {contactTypesList.map(type => {
+                      const isSelected = contactTypes.includes(type);
+                      return (
+                        <label key={type} className="flex items-center gap-2 text-[13px] text-gray-300 cursor-pointer group">
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                            isSelected 
+                              ? 'bg-[#E71F7F] border-[#E71F7F]' 
+                              : 'bg-[#121212] border-[#555] group-hover:border-gray-400'
+                          }`}>
+                            {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                          </div>
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={isSelected}
+                            onChange={() => handleContactTypeChange(type)}
+                          />
+                          {type}
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm text-gray-400">Aktivierung:</label>
+                    <select className="bg-[#121212] border border-[#333] rounded text-sm px-2 py-1 text-gray-200">
+                      <option>Aktiv</option>
+                      <option>Inaktiv</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Dynamic Tab Content Area */}
               <motion.div 
                 key={activeTab}
