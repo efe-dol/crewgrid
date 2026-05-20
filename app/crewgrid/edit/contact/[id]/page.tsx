@@ -282,14 +282,14 @@ export default function EditContactPage() {
           </div>
 
           <motion.div 
-            className="content flex"
+            className="content flex h-full"
             variants={pageVariants}
             initial="initial"
             animate="animate"
             exit="exit"
           >
             {/* Inner Left Sidebar (Dynamic) */}
-            <div className="w-56 shrink-0 bg-[#1a1a1a] border-r border-[#333] flex flex-col pt-4 overflow-y-auto">
+            <div className="w-56 shrink-0 bg-[#1a1a1a] border-r border-[#333] flex flex-col pt-4 overflow-y-auto h-full sticky top-0">
               <div className="px-5 mb-2 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                 Sektionen
               </div>
@@ -385,7 +385,7 @@ export default function EditContactPage() {
             </div>
 
             {/* Main Form Area */}
-            <div className="flex-1 bg-[#121212] overflow-y-auto p-6 text-gray-100">
+            <div className="flex-1 bg-[#121212] overflow-y-auto p-6 text-gray-100 h-full">
 
               {/* Top Row: Kontaktgruppen + Aktivierung */}
               <div className="mb-6 p-3 bg-[#121212] rounded">
