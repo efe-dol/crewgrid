@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Supabase Database (PostgreSQL)
+  db:
+    image: postgres:15.4
+    container_name: crewgrid_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_test_password_2026}
+      POSTGRES_DB: crewgrid
+    ports:
+      - "54329:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Supabase API (using official supabase image)
+  api:
+    image: postgrest/postgrest:latest
+    container_name: crewgrid_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:${DB_PASSWORD:-secure_test_password_2026}@db/crewgrid?sslmode=disable
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_ENCODING: utf8
+    ports:
+      - "8090:3000"
+
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: crewgrid_app
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: http://api:3000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  db_data:

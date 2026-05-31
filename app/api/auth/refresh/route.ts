@@ -12,7 +12,8 @@ export async function POST() {
       return NextResponse.json({ error: 'No refresh token' }, { status: 401 });
     }
 
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-development-only-please-change';
+    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not configured');
+    const jwtSecret = process.env.JWT_SECRET;
     
     // Verify refresh token
     const decoded = jwt.verify(refreshToken, jwtSecret) as any;

@@ -135,7 +135,8 @@ export async function POST(request: Request) {
     });
 
     // Generate JWTs
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-development-only-please-change';
+    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not configured');
+    const jwtSecret = process.env.JWT_SECRET;
     
     const accessToken = jwt.sign(
       { 
@@ -169,14 +170,6 @@ export async function POST(request: Request) {
 
     cookieStore.set('access_token', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 15 * 60 // 15 mins
-    });
-
-    cookieStore.set('has_session', 'true', {
-      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',

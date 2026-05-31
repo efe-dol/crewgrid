@@ -9,7 +9,8 @@ export async function POST() {
     const accessToken = cookieStore.get('access_token')?.value;
     const refreshToken = cookieStore.get('refresh_token')?.value;
 
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-development-only-please-change';
+    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not configured');
+    const jwtSecret = process.env.JWT_SECRET;
     
     // Try to decode access token to find session ID to invalidate
     let sessionId = null;

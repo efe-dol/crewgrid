@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/utils/supabase/admin';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET() {
   try {
+    const supabaseSession = await createClient();
+    const { data: { user }, error: authError } = await (await supabaseSession).auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 });
+    }
+
     const supabase = createAdminClient();
     
     // Fetch all licenses

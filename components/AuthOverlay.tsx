@@ -27,18 +27,29 @@ export default function AuthOverlay() {
   useEffect(() => {
     // Check if we already have a session
     const checkSession = async () => {
-      // Use standard Supabase auth check AND our localStorage flag
-      const hasLocalSession = localStorage.getItem('has_session') === 'true';
-      if (hasLocalSession) {
-        setUser({ loggedIn: true });
-        setDidLogin(true);
-        setIsSessionLoading(false);
-        return;
-      }
-
-      // Check if user is logged into Supabase but missing the custom license session
+      // ONLY check Supabase auth and active session - NO localStorage fallback
       const { data } = await supabase.auth.getSession();
+      
       if (data?.session) {
+        // Check if user has ACTIVE session in login_sessions table
+        try {
+          const res = await fetch('/api/auth/session-status', {
+            headers: { Authorization: `Bearer ${data.session.access_token}` }
+          });
+          
+          if (res.ok) {
+            const sessionData = await res.json();
+            if (sessionData.isActive) {
+              // Session is active - user is fully authenticated
+              setUser(sessionData.user);
+              setDidLogin(true);
+              setIsSessionLoading(false);
+              return;
+            }
+          }
+        } catch {}
+        
+        // No active session - show license selection
         setStep(2);
         setIsLicenseLoading(true);
         try {
@@ -123,7 +134,6 @@ export default function AuthOverlay() {
         return;
       }
 
-      localStorage.setItem('has_session', 'true');
       setUser(data.user);
       setDidLogin(true);
       setIsSubmitting(false);
